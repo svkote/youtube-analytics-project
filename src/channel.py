@@ -9,26 +9,28 @@ class Channel:
 
     def __init__(self, channel_id: str) -> None:
         """Экземпляр инициализируется id канала. Дальше все данные будут подтягиваться по API."""
-        self.channel_id = channel_id
-        self.api_key = os.getenv("YOUTUBE_API_KEY_FOR_SKYPRO")
-        if not self.api_key:
-            raise ValueError("Не удалось найти API ключ. Проверьте переменную окружения YOUTUBE_API_KEY_FOR_SKYPRO.")
-        self.youtube = build('youtube', 'v3', developerKey=self.api_key)
+        self._channel_id = channel_id
+        self.youtube = self.get_service()
         self._initialize_channel_data()
+
+    @property
+    def channel_id(self) -> str:
+        """Геттер для атрибута channel_id."""
+        return self._channel_id
 
     def _initialize_channel_data(self) -> None:
         """Инициализирует данные о канале с помощью YouTube API."""
         try:
             request = self.youtube.channels().list(
                 part='snippet,statistics',
-                id=self.channel_id
+                id=self._channel_id
             )
             response = request.execute()
             channel_info = response['items'][0]
 
             self.title = channel_info['snippet']['title']
             self.description = channel_info['snippet']['description']
-            self.url = f"https://www.youtube.com/channel/{self.channel_id}"
+            self.url = f"https://www.youtube.com/channel/{self._channel_id}"
             self.subscriber_count = int(channel_info['statistics']['subscriberCount'])
             self.video_count = int(channel_info['statistics']['videoCount'])
             self.view_count = int(channel_info['statistics']['viewCount'])
@@ -63,7 +65,7 @@ class Channel:
         try:
             request = self.youtube.channels().list(
                 part='snippet,statistics',
-                id=self.channel_id
+                id=self._channel_id
             )
             response = request.execute()
             print(json.dumps(response, indent=2, ensure_ascii=False))
